@@ -109,10 +109,33 @@ namespace RtmpSharp.Net
                             break;
 
                         case "_error":
-                            // unwrap the flex wrapper object if it is present
-                            var b = param as ErrorMessage;
+                            // try to unwrap common rtmp and flex error types, if we recognize any.
+                            switch (param) {
+                                case string v:
+                                    callbacks.SetException(i.InvokeId, new Exception(v));
+                                    break;
 
-                            callbacks.SetException(i.InvokeId, b != null ? new InvocationException(b) : new InvocationException());
+                                case ErrorMessage e:
+                                    callbacks.SetException(i.InvokeId, new InvocationException(e, e.FaultCode, e.FaultString, e.FaultDetail, e.RootCause, e.ExtendedData));
+                                    break;
+
+                                case AsObject o:
+                                    object x;
+
+                                    var code        = o.TryGetValue("code",        out x) && x is string q ? q : null;
+                                    var description = o.TryGetValue("description", out x) && x is string r ? r : null;
+                                    var cause       = o.TryGetValue("cause",       out x) && x is string s ? s : null;
+
+                                    var extended    = o.TryGetValue("ex", out x) || o.TryGetValue("extended", out x) ? x : null;
+
+                                    callbacks.SetException(i.InvokeId, new InvocationException(o, code, description, cause, null, extended));
+                                    break;
+
+                                default:
+                                    callbacks.SetException(i.InvokeId, new InvocationException());
+                                    break;
+                            }
+
                             break;
 
                         case "receive":
