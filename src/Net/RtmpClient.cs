@@ -20,7 +20,7 @@ namespace RtmpSharp.Net
 {
     public partial class RtmpClient
     {
-        const int RtmpDefaultPort = 1935;
+        const int DefaultPort = 1935;
 
 
         public event EventHandler<MessageReceivedEventArgs>    MessageReceived;
@@ -202,6 +202,8 @@ namespace RtmpSharp.Net
             public string PageUrl;
             public string SwfUrl;
 
+            public string FlashVersion = "WIN 21,0,0,174";
+
             public object[] Arguments;
             public RemoteCertificateValidationCallback Validate;
         }
@@ -217,7 +219,7 @@ namespace RtmpSharp.Net
             var validate    = options.Validate ?? ((sender, certificate, chain, errors) => true);
 
             var uri         = new Uri(url);
-            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port != -1 ? uri.Port : RtmpDefaultPort);
+            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port != -1 ? uri.Port : DefaultPort);
             var stream      = await GetStreamAsync(uri, tcp.GetStream(), validate);
 
             await Handshake.GoAsync(stream);
@@ -232,12 +234,13 @@ namespace RtmpSharp.Net
 
             client.queue    = (message, chunkStreamId) => writer.QueueWrite(message, chunkStreamId);
             client.clientId = await RtmpConnectAsync(
-                client:    client,
-                appName:   options.AppName,
-                pageUrl:   options.PageUrl,
-                swfUrl:    options.SwfUrl,
-                tcUrl:     uri.ToString(),
-                arguments: options.Arguments);
+                client:       client,
+                appName:      options.AppName,
+                pageUrl:      options.PageUrl,
+                swfUrl:       options.SwfUrl,
+                tcUrl:        uri.ToString(),
+                flashVersion: options.FlashVersion,
+                arguments:    options.Arguments);
 
 
             return client;
@@ -266,7 +269,7 @@ namespace RtmpSharp.Net
         }
 
         // attempts to perform an rtmp connect, and returns the client id assigned to us (if any - this may be null)
-        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl, object[] arguments)
+        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl, string flashVersion, object[] arguments)
         {
             var request = new InvokeAmf0
             {
@@ -278,7 +281,7 @@ namespace RtmpSharp.Net
                     { "app",            appName          },
                     { "audioCodecs",    3575             },
                     { "capabilities",   239              },
-                    { "flashVer",       "WIN 21,0,0,174" },
+                    { "flashVer",       flashVersion     },
                     { "fpad",           false            },
                     { "objectEncoding", (double)3        }, // currently hard-coded to amf3
                     { "pageUrl",        pageUrl          },
