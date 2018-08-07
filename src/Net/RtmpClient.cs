@@ -101,18 +101,27 @@ namespace RtmpSharp.Net
                         case "_result":
                             // unwrap the flex wrapper object if it is present
                             var a = param as AcknowledgeMessage;
+
                             callbacks.SetResult(i.InvokeId, a?.Body ?? param);
                             break;
 
                         case "_error":
                             // unwrap the flex wrapper object if it is present
                             var b = param as ErrorMessage;
+
                             callbacks.SetException(i.InvokeId, b != null ? new InvocationException(b) : new InvocationException());
                             break;
 
                         case "receive":
                             if (param is AsyncMessage c)
-                                InternalReceiveSubscriptionValue(c.ClientId, c.Headers.GetDefault(AsyncMessageHeaders.Subtopic) as string, c.Body);
+                            {
+                                var id    = c.ClientId;
+                                var value = c.Headers.TryGetValue(AsyncMessageHeaders.Subtopic, out var x) ? x as string : null;
+                                var body  = c.Body;
+
+                                InternalReceiveSubscriptionValue(id, value, body);
+                            }
+
                             break;
 
                         case "onstatus":
