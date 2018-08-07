@@ -29,22 +29,22 @@ namespace RtmpSharp.IO.AMF3
 
         public void Compress(Compression algorithm)
         {
-            using (var output = new MemoryStream())
-            using (var stream = algorithm == Compression.Zlib ? new ZlibStream(output, CompressionMode.Compress, true) : new DeflateStream(output, CompressionMode.Compress, true))
+            using (var memory = new MemoryStream())
+            using (var stream = algorithm == Compression.Zlib ? new ZlibStream(memory, CompressionMode.Compress, true) : new DeflateStream(memory, CompressionMode.Compress, true))
             {
                 stream.Write(Buffer.Array, Buffer.Offset, Buffer.Count);
-                Buffer = output.GetBuffer();
+                Buffer = new ArraySegment<byte>(memory.GetBuffer(), offset: 0, count: (int)memory.Length);
             }
         }
 
         public void Uncompress(Compression algorithm)
         {
-            using (var input  = new MemoryStream(Buffer.Array, Buffer.Offset, Buffer.Count, false))
-            using (var stream = algorithm == Compression.Zlib ? new ZlibStream(input, CompressionMode.Decompress, false) : new DeflateStream(input, CompressionMode.Decompress, false))
-            using (var output = new MemoryStream())
+            using (var source       = new MemoryStream(Buffer.Array, Buffer.Offset, Buffer.Count, false))
+            using (var intermediate = algorithm == Compression.Zlib ? new ZlibStream(source, CompressionMode.Decompress, false) : new DeflateStream(source, CompressionMode.Decompress, false))
+            using (var memory       = new MemoryStream())
             {
-                stream.CopyTo(output);
-                Buffer = output.GetBuffer();
+                intermediate.CopyTo(memory);
+                Buffer = new ArraySegment<byte>(memory.GetBuffer(), offset: 0, count: (int)memory.Length);
             }
         }
 
