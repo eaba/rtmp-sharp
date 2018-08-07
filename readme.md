@@ -15,15 +15,17 @@ var context = new SerializationContext();
 var options = new RtmpClient.Options()
 {
     // required parameters:
-    Url         = "rtmp://ingress.winky.com:1234",
-    Context     = context,
+    Url          = "rtmp://ingress.winky.com:1234",
+    Context      = context,
 
     // optional parameters:
-    AppName     = "demo-app",                                  // optional app name, passed to the remote server during connect.
-    PageUrl     = "https://example.com/rtmpsharp/demo.html",   // optional page url, passed to the remote server during connect.
-    SwfUrl      = "",                                          // optional swf url,  passed to the remote server during connect.
-    ChunkLength = 4192,                                        // optional outgoing rtmp chunk length.
-    Validate    = (sender, certificate, chain, errors) => true // optional certificate validation callback. used only in tls connections.
+    AppName      = "demo-app",                                  // optional app name, passed to the remote server during connect.
+    PageUrl      = "https://example.com/rtmpsharp/demo.html",   // optional page url, passed to the remote server during connect.
+    SwfUrl       = "",                                          // optional swf url, passed to the remote server during connect.
+    FlashVersion = "WIN 21,0,0,174",                            // optional flash version, paased to the remote server during connect.
+
+    ChunkLength  = 4192,                                        // optional outgoing rtmp chunk length.
+    Validate     = (sender, certificate, chain, errors) => true // optional certificate validation callback. used only in tls connections.
 };
 
 var client = await RtmpClient.ConnectAsync(options);
