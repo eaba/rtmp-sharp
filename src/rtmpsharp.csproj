@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <Description>a fast and lightweight rtmp(s) client library.</Description>
     <PackageTags>rtmp rtmps amf flex netcore</PackageTags>
 
