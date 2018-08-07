@@ -19,8 +19,8 @@ namespace Hina.Collections
         readonly IEqualityComparer<TKey> comparer;
 
         public int                 Count  => count;
-        public ICollection<TKey>   Keys   => entries.MapArray(x => x.Key);
-        public ICollection<TValue> Values => entries.MapArray(x => x.Value);
+        public ICollection<TKey>   Keys   => entries.Take(count).MapArray(x => x.Key);
+        public ICollection<TValue> Values => entries.Take(count).MapArray(x => x.Value);
 
 
         public StaticDictionary()
@@ -110,7 +110,7 @@ namespace Hina.Collections
 
         #region idictionary<k, v> members
 
-        IEnumerator<KeyValuePair<TKey, TValue>> Enumerator                                                      => entries.Take(Count).Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value)).GetEnumerator();
+        IEnumerator<KeyValuePair<TKey, TValue>> Enumerator                                                      => entries.Take(count).Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value)).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator()                                                                 => Enumerator;
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()         => Enumerator;
 
