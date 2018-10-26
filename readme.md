@@ -1,6 +1,6 @@
-# rtmp-sharp (v0.3) [![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
+# rtmpsharp (v0.4) [![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
 
-`rtmp-sharp` is a fast and lightweight data-oriented RTMP(S) library for .NET Desktop and .NET Core. [Install from
+`rtmpsharp` is a fast and lightweight data-oriented RTMP(S) library for .NET Desktop and .NET Core. [Install from
 NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.
 
 This library is currently stable and used in production, serving more than 1 billion requests every month, as well as in
@@ -15,15 +15,17 @@ var context = new SerializationContext();
 var options = new RtmpClient.Options()
 {
     // required parameters:
-    Url         = "rtmp://ingress.winky.com:1234",
-    Context     = context,
+    Url          = "rtmp://ingress.winky.com:1234",
+    Context      = context,
 
     // optional parameters:
-    AppName     = "demo-app",                                  // optional app name, passed to the remote server during connect.
-    PageUrl     = "https://example.com/rtmpsharp/demo.html",   // optional page url, passed to the remote server during connect.
-    SwfUrl      = "",                                          // optional swf url,  passed to the remote server during connect.
-    ChunkLength = 4192,                                        // optional outgoing rtmp chunk length.
-    Validate    = (sender, certificate, chain, errors) => true // optional certificate validation callback. used only in tls connections.
+    AppName      = "demo-app",                                  // optional app name, passed to the remote server during connect.
+    PageUrl      = "https://example.com/rtmpsharp/demo.html",   // optional page url, passed to the remote server during connect.
+    SwfUrl       = "",                                          // optional swf url, passed to the remote server during connect.
+    FlashVersion = "WIN 21,0,0,174",                            // optional flash version, paased to the remote server during connect.
+
+    ChunkLength  = 4192,                                        // optional outgoing rtmp chunk length.
+    Validate     = (sender, certificate, chain, errors) => true // optional certificate validation callback. used only in tls connections.
 };
 
 var client = await RtmpClient.ConnectAsync(options);
@@ -38,7 +40,7 @@ namespace collisions: twitchtv + youtube may both expose an rtmp interface, but 
 what constitutes a video object.
 
 The `SerializationContext` constructor accepts an optional array of types that the instance should serialize into their
-respective concrete types. If `rtmp-sharp` receives a type that isn't registered, it will by default deserialize that
+respective concrete types. If `rtmpsharp` receives a type that isn't registered, it will by default deserialize that
 object into an `AsObject`. If you don't like this, and want to fail deserialization, then turn `AsObjectFallback` off.
 So if you do not pass it any types, then all objects will be deserialized into anonymous `AsObject`s.
 
@@ -58,8 +60,8 @@ Console.WriteLine(d.items[0].greeting)
 
 ## Type Annotations
 
-By default, `rtmp-sharp` will serialize all public fields and public properties using their field names. You may
-instruct `rtmp-sharp` to use a different name for serialization by simply annotating the interested types or members
+By default, `rtmpsharp` will serialize all public fields and public properties using their field names. You may
+instruct `rtmpsharp` to use a different name for serialization by simply annotating the interested types or members
 with the `RtmpSharp` attribute. Ignore a field by annotating it with `RtmpIgnore`.
 
 ```csharp
@@ -78,7 +80,7 @@ namespace Winky
         // this field does not have any annotations, but because it is a public field, it will still be serialized.
         public byte[] Hash;
 
-        // this attribute directs `rtmp-sharp` to ignore this field: it will not be considered during serialization and
+        // this attribute directs `rtmpsharp` to ignore this field: it will not be considered during serialization and
         // deserialization.
         [RtmpIgnore]
         public int State;
@@ -93,11 +95,11 @@ documentation generation tooling.
 
 ## Changes From v0.1
 
-`rtmp-sharp` v0.2 is a significant upgrade from v0.1 - a large portion of the code base has been revised and rewritten.
+`rtmpsharp` v0.2 is a significant upgrade from v0.1 - a large portion of the code base has been revised and rewritten.
 
 With v0.2, we've consistently seen large and significant (> 100x) improvements in throughput, as well as improvements in
 message latency, GC pressure, and memory consumption. These benefits are especially visible if you are using
-`rtmp-sharp` at scale, whether it is in serializing millions of large object graphs, or for tiny objects streamed in a
+`rtmpsharp` at scale, whether it is in serializing millions of large object graphs, or for tiny objects streamed in a
 gigantic firehose.
 
 v0.2 also improves how it handles disconnections, is a little more intelligent in serializing objects, and in speaking

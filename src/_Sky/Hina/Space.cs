@@ -7,6 +7,9 @@ using System.Runtime.CompilerServices;
 // csharp: hina/space.cs [snipped]
 namespace Hina
 {
+    // `Space<T>` is a zero-copy view into some borrowed memory.
+    //     [2018-01-01] todo: deprecate `Space<T>`. this class was created in 2016. .net core 2.0 now has `Memory<T>`
+    //     and `Span<T>` which brings this functionality directly into the bcl.
     public struct Space<T>
     {
         public static readonly Space<T> Empty = new Space<T>(new T[0]);

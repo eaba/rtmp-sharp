@@ -103,7 +103,7 @@ namespace RtmpSharp.Net
                     //         - the one byte variant can encode chunk stream ids up to and including #63. we don't expect to
                     //             encode that many streams right now (unless a user library wants it), so we can assume 1 byte
                     //             chunk headers for now.
-                    //
+                    //~
                     //     - [message headers]
                     //         - the first message header must be a type 0 (new) header, which is 11 bytes large.
                     //         - all further message headers can be a type 3 (continuation) header, which is 0 bytes large.
@@ -116,8 +116,9 @@ namespace RtmpSharp.Net
                     var estimatedMaxLength = packetLength + chunkCount + 11;
                     var writer             = new AmfWriter(estimatedMaxLength, context);
 
-                    var previous           = streams.GetDefault(packet.StreamId);
+                    var previous           = streams.TryGetValue(packet.StreamId, out var value) ? value : default(ChunkStream.Snapshot);
                     var next               = previous.Clone();
+
                     next.Ready             = true;
                     next.ContentType       = packet.Type;
                     next.ChunkStreamId     = packet.StreamId;

@@ -15,15 +15,16 @@ namespace RtmpSharp.Messaging
         public override string Message    => FaultString;
         public override string StackTrace => FaultDetail;
 
-        internal InvocationException(ErrorMessage message)
-        {
-            SourceException = message;
 
-            FaultCode    = message.FaultCode;
-            FaultString  = message.FaultString;
-            FaultDetail  = message.FaultDetail;
-            RootCause    = message.RootCause;
-            ExtendedData = message.ExtendedData;
+        internal InvocationException(object source, string faultCode, string faultString, string faultDetail, object rootCause, object extendedData)
+        {
+            FaultCode       = faultCode;
+            FaultString     = faultString;
+            FaultDetail     = faultDetail;
+            RootCause       = rootCause;
+            ExtendedData    = extendedData;
+
+            SourceException = source;
         }
 
         public InvocationException()

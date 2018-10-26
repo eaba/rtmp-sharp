@@ -23,7 +23,7 @@ namespace RtmpSharp
         }
 
 
-        public string CanonicalName(string name) => remoteNameLookup.GetDefault(name, name);
+        public string CanonicalName(string name) => remoteNameLookup.TryGetValue(name, out var canonical) ? canonical : name;
         public bool   Exists(string name)        => localTypeLookup.TryGetValue(name, out var type) && constructors.ContainsKey(type);
         public object CreateOrNull(string name)  => localTypeLookup.TryGetValue(name, out var type) ? constructors[type](EmptyCollection<object>.Array) : null;
 

@@ -20,6 +20,9 @@ namespace RtmpSharp.Net
 {
     public partial class RtmpClient
     {
+        const int DefaultPort = 1935;
+
+
         public event EventHandler<MessageReceivedEventArgs>    MessageReceived;
         public event EventHandler<ClientDisconnectedException> Disconnected;
         public event EventHandler<Exception>                   CallbackException;
@@ -101,18 +104,50 @@ namespace RtmpSharp.Net
                         case "_result":
                             // unwrap the flex wrapper object if it is present
                             var a = param as AcknowledgeMessage;
+
                             callbacks.SetResult(i.InvokeId, a?.Body ?? param);
                             break;
 
                         case "_error":
-                            // unwrap the flex wrapper object if it is present
-                            var b = param as ErrorMessage;
-                            callbacks.SetException(i.InvokeId, b != null ? new InvocationException(b) : new InvocationException());
+                            // try to unwrap common rtmp and flex error types, if we recognize any.
+                            switch (param) {
+                                case string v:
+                                    callbacks.SetException(i.InvokeId, new Exception(v));
+                                    break;
+
+                                case ErrorMessage e:
+                                    callbacks.SetException(i.InvokeId, new InvocationException(e, e.FaultCode, e.FaultString, e.FaultDetail, e.RootCause, e.ExtendedData));
+                                    break;
+
+                                case AsObject o:
+                                    object x;
+
+                                    var code        = o.TryGetValue("code",        out x) && x is string q ? q : null;
+                                    var description = o.TryGetValue("description", out x) && x is string r ? r : null;
+                                    var cause       = o.TryGetValue("cause",       out x) && x is string s ? s : null;
+
+                                    var extended    = o.TryGetValue("ex", out x) || o.TryGetValue("extended", out x) ? x : null;
+
+                                    callbacks.SetException(i.InvokeId, new InvocationException(o, code, description, cause, null, extended));
+                                    break;
+
+                                default:
+                                    callbacks.SetException(i.InvokeId, new InvocationException());
+                                    break;
+                            }
+
                             break;
 
                         case "receive":
                             if (param is AsyncMessage c)
-                                InternalReceiveSubscriptionValue(c.ClientId, c.Headers.GetDefault(AsyncMessageHeaders.Subtopic) as string, c.Body);
+                            {
+                                var id    = c.ClientId;
+                                var value = c.Headers.TryGetValue(AsyncMessageHeaders.Subtopic, out var x) ? x as string : null;
+                                var body  = c.Body;
+
+                                InternalReceiveSubscriptionValue(id, value, body);
+                            }
+
                             break;
 
                         case "onstatus":
@@ -190,6 +225,8 @@ namespace RtmpSharp.Net
             public string PageUrl;
             public string SwfUrl;
 
+            public string FlashVersion = "WIN 21,0,0,174";
+
             public object[] Arguments;
             public RemoteCertificateValidationCallback Validate;
         }
@@ -205,7 +242,7 @@ namespace RtmpSharp.Net
             var validate    = options.Validate ?? ((sender, certificate, chain, errors) => true);
 
             var uri         = new Uri(url);
-            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
+            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port != -1 ? uri.Port : DefaultPort);
             var stream      = await GetStreamAsync(uri, tcp.GetStream(), validate);
 
             await Handshake.GoAsync(stream);
@@ -220,12 +257,13 @@ namespace RtmpSharp.Net
 
             client.queue    = (message, chunkStreamId) => writer.QueueWrite(message, chunkStreamId);
             client.clientId = await RtmpConnectAsync(
-                client:    client,
-                appName:   options.AppName,
-                pageUrl:   options.PageUrl,
-                swfUrl:    options.SwfUrl,
-                tcUrl:     uri.ToString(),
-                arguments: options.Arguments);
+                client:       client,
+                appName:      options.AppName,
+                pageUrl:      options.PageUrl,
+                swfUrl:       options.SwfUrl,
+                tcUrl:        uri.ToString(),
+                flashVersion: options.FlashVersion,
+                arguments:    options.Arguments);
 
 
             return client;
@@ -254,7 +292,7 @@ namespace RtmpSharp.Net
         }
 
         // attempts to perform an rtmp connect, and returns the client id assigned to us (if any - this may be null)
-        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl, object[] arguments)
+        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl, string flashVersion, object[] arguments)
         {
             var request = new InvokeAmf0
             {
@@ -266,7 +304,7 @@ namespace RtmpSharp.Net
                     { "app",            appName          },
                     { "audioCodecs",    3575             },
                     { "capabilities",   239              },
-                    { "flashVer",       "WIN 21,0,0,174" },
+                    { "flashVer",       flashVersion     },
                     { "fpad",           false            },
                     { "objectEncoding", (double)3        }, // currently hard-coded to amf3
                     { "pageUrl",        pageUrl          },
